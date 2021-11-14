@@ -15,6 +15,7 @@ import { HorizontalList } from 'components/HorizontalList';
 import { RainbowText } from 'components/RainbowText';
 import { Main } from 'components/Main';
 import { NoResults } from 'components/NoResults';
+import { Spinner } from 'components/Spinner';
 
 /**
  * The thought behind this function was that I wanted the data from the Domains
@@ -53,7 +54,7 @@ const Home: NextPage<HomePageProps> = ({ domains }) => {
   const { ensData, setEnsData, sortAsc, sortDesc, sortOldToNew, sortNewToOld } =
     useSort(domains);
 
-  const [searchAllDomains] = useLazyQuery(searchDomains, {
+  const [searchAllDomains, { loading }] = useLazyQuery(searchDomains, {
     onCompleted(data) {
       setEnsData(data.domains);
     },
@@ -112,9 +113,10 @@ const Home: NextPage<HomePageProps> = ({ domains }) => {
           );
         })}
       </HorizontalList>
+      {loading && <Spinner />}
       {noEnsData && <NoResults>No results found for {searchText}</NoResults>}
       {ensData.map((domain: Domain) => {
-        if (noEnsData) return <div />;
+        if (noEnsData || loading) return <div />;
 
         return (
           <RainbowText
