@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import Image from 'next/image';
 import MagnifyingGlass from 'styles/magnifying-glass.svg';
+import { HTMLInputTypeAttribute, HTMLProps, InputHTMLAttributes } from 'react';
 
 export const Input = styled.input`
   width: 100%;
@@ -43,10 +44,12 @@ const StyledSearchbar = styled(Input)`
   padding-left: 110px;
 `;
 
-export const Searchbar = (props) => {
+export const Searchbar: React.FC<InputHTMLAttributes<HTMLInputElement>> = (
+  props
+) => {
   return (
     <Container>
-      <StyledSearchbar type="text" {...props} />
+      <StyledSearchbar {...props} />
 
       <Icon>
         <Image
