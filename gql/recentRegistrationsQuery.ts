@@ -1,6 +1,10 @@
 import { gql } from '@apollo/client';
 import client from 'apollo-client';
 
+/**
+ * An enum here might be unnecessary for now, but thought it might be useful
+ * if we were to later add more queries that require desc/asc ordering to be defined.
+ */
 export enum OrderBy {
   DESC = 'desc',
   ASC = 'asc',
@@ -12,6 +16,14 @@ export const searchDomains = gql`
       id
       name
       labelhash
+    }
+  }
+`;
+
+export const fetchRegistration = gql`
+  query fetchRegistration($labelhash: ID) {
+    registration(id: $labelhash) {
+      registrationDate
     }
   }
 `;

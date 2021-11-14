@@ -1,17 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { NextPage } from 'next';
-import { ethers } from 'ethers';
 import { useLazyQuery } from '@apollo/client';
-import { Domain, ENSData } from 'types';
-import { RainbowText } from 'styles/root';
-import abi from 'abi/index.json';
+import { Domain, ENSData, HomePageProps } from 'types';
+import { useContract } from 'hooks/useContract';
+import { useSort } from 'hooks/useSort';
 import {
   fetchRecentlyRegisteredDomains,
   searchDomains,
+  fetchRegistration,
 } from 'gql/recentRegistrationsQuery';
+import { Searchbar } from 'components/Input';
+import { Pill } from 'components/Pill';
+import { HorizontalList } from 'components/HorizontalList';
+import { RainbowText } from 'components/RainbowText';
+import { Main } from 'components/Main';
+import { NoResults } from 'components/NoResults';
 
-const CONTRACT_ADDRESS = '0xB6F71724FCa391fC6A247AD47e5Dc0207bd22bae';
-
+/**
+ * The thought behind this function was that I wanted the data from the Domains
+ * query and the Registrations query to match. Since this UI shows the data in the same manner,
+ * I think it's easier to write the component when the data conforms to a particular structure.
+ * Instead of setting up multiple conditionals throughout the component, we can just check for null/undefined
+ * or set defaults.
+ */
 const registrationToDomainStructure = (data: ENSData) => ({
   name: data.domain?.name,
   id: data.id,
@@ -30,118 +41,112 @@ export async function getServerSideProps() {
   const domains = data.registrations.map(registrationToDomainStructure);
 
   return {
-    props: { domains: [...domains] }, // will be passed to the page component as props
+    props: { domains: [...domains] },
   };
 }
 
-type Props = {
-  domains: [Domain];
-};
+const Home: NextPage<HomePageProps> = ({ domains }) => {
+  const [selected, setSelected] = useState<number>();
+  const [searchText, setSearchText] = useState<string>('');
 
-const Home: NextPage<Props> = ({ domains }) => {
-  const [provider, setProvider] = useState({});
-  const [contract, setContract] = useState({});
-  const [ensData, setEnsData] = useState(domains);
+  const { contract } = useContract();
+  const { ensData, setEnsData, sortAsc, sortDesc, sortOldToNew, sortNewToOld } =
+    useSort(domains);
+
   const [searchAllDomains] = useLazyQuery(searchDomains, {
     onCompleted(data) {
-      domainToStructure(data.domains);
       setEnsData(data.domains);
     },
   });
 
-  const domainToStructure = async (domains: [Domain]) => {
-    Promise.all(
-      domains.map(async (domain) => {
-        const block = await provider.getBlockNumber(
-          domain.events[0].blockNumber
-        );
-
-        console.log(block);
-        const blockTxn = await provider.getBlock(block);
-      })
-    );
-
-    // return domains.map(async (domain) => {
-    // console.log(domain.events);
-
-    // const block = await provider.getBlockNumber(domain.events[0].blockNumber);
-    // const blockTxn = await provider.getBlock(block);
-
-    // console.log(blockTxn.timestamp);
-
-    //   return {
-    //     name: domain.name,
-    //     id: domain.id,
-    //   };
-    // });
-  };
-
-  const initContract = () => {
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    const signer = provider.getSigner();
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, signer);
-
-    // @ts-ignore
-    window.PROVIDE = provider;
-
-    setProvider(provider);
-    setContract(contract);
-  };
-
-  useEffect(() => {
-    initContract();
-  }, []);
-
   const sendENSNameTransaction = async (name: string) => {
-    contract.setENSName(name);
+    await contract?.setENSName(name);
   };
 
-  const sort = (type: any) => {
-    return [...ensData].sort((a, b) => a[type].localeCompare(b[type]));
-  };
+  const noEnsData = ensData.length === 0;
 
-  const sortAsc = () => {
-    const reversed = sort('name').reverse();
-
-    setEnsData(reversed);
-  };
-
-  const sortDesc = () => {
-    setEnsData(sort('name'));
-  };
-
-  const sortOldToNew = () => {
-    setEnsData(sort('registrationDate'));
-  };
-
-  const sortNewToOld = () => setEnsData(sort('registrationDate').reverse());
+  const filterTypes = [
+    {
+      method: sortAsc,
+      text: 'Sort A-Z',
+    },
+    {
+      method: sortDesc,
+      text: 'Sort Z-A',
+    },
+    {
+      method: sortNewToOld,
+      text: 'Newest to Oldest',
+    },
+    {
+      method: sortOldToNew,
+      text: 'Oldest to Newest',
+    },
+  ];
 
   return (
-    <div>
-      <input
-        type="text"
-        onChange={(e) =>
+    <Main>
+      <Searchbar
+        placeholder="Search for an ENS name"
+        onChange={(e) => {
+          setSearchText(e.target.value);
+
           searchAllDomains({
             variables: { first: 10, where: { name_contains: e.target.value } },
-          })
-        }
+          });
+        }}
       />
-      <button onClick={sortAsc}>sort a-z</button>
-      <button onClick={sortDesc}>sort z-a</button>
-      <button onClick={sortNewToOld}>newest to oldest</button>
-      <button onClick={sortOldToNew}>oldest to newest</button>
+      <HorizontalList>
+        {filterTypes.map((filter, index) => {
+          return (
+            <Pill
+              key={index}
+              selected={selected === filterTypes.indexOf(filterTypes[index])}
+              onClick={() => {
+                setSelected(index);
+                filter.method();
+              }}
+            >
+              {filter.text}
+            </Pill>
+          );
+        })}
+      </HorizontalList>
+      {noEnsData && <NoResults>No results found for {searchText}</NoResults>}
       {ensData.map((domain: Domain) => {
+        if (noEnsData) return <div />;
+
         return (
           <RainbowText
             key={domain.id}
             onClick={() => sendENSNameTransaction(domain.name)}
           >
-            {domain.name} | {domain.registrationDate}
+            {domain.name}
           </RainbowText>
         );
       })}
-    </div>
+    </Main>
   );
 };
 
 export default Home;
+
+// const domainToStructure = async (domains: [Domain]) => {
+//   const all = await Promise.all(
+//     domains.map(async (domain) => {
+//       getRegistration({
+//         variables: {
+//           labelhash: domain.labelhash,
+//         },
+//       });
+
+//       // return regs;
+//     })
+//   );
+
+//   console.log(all);
+// };
+
+// const [getRegistration] = useLazyQuery(fetchRegistration);
+
+// domainToStructure(data.domains);
