@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+This is live on Vercel: https://ens-app.vercel.app/
+
 ## Getting Started
 
 First, install dependencies with:
@@ -18,7 +20,7 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## First Hurdle: Sorting domains by newest/oldest
+### First Hurdle: Sorting domains by newest/oldest
 
 Overall, a fun project! I love the aesthetic, so kudos! First and foremost, while I felt pretty good about my results, I wasn't able to get the newest/oldest and oldest/newest sorting working for queried results; I only have this working for the initial set of registrations.
 
@@ -73,3 +75,9 @@ await provider?.provider?.request({ method: 'eth_requestAccounts' });
 
 I added this in last minute and don't feel great about it. But without it, I wasn't able to consistently connect to Metamask. The ethers.js documentation suggests that this isn't needed but it was the only way I could reliably get the connection to occur.
 https://docs.ethers.io/v5/getting-started/#getting-started--connecting
+
+### Things that are missing but I skipped due to time constraints
+
+- Tests!
+- Error handling!
+- A user friendly way to detect and switch networks
