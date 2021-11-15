@@ -2,7 +2,13 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First, run the development server:
+First, install dependencies with:
+
+```bash
+yarn
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -12,23 +18,30 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Notes
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+Overall, a fun project! I love the aesthetic, so kudos! First and foremost, while I felt pretty good about my results, I wasn't able to get the newest/oldest and oldest/newest sorting working for queried results; I only have this working for the initial set of registrations.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+What I found is that the ENS subgraph makes this a little challenging (as far as I can tell). I thought I'd be able to do the following query:
 
-## Learn More
+```js
+registrations(
+  first: 10,
+  orderBy: registrationDate,
+  orderDirection: asc,
+  where: { domain_contains: "dave" }) {
+    labelName
+  }
+```
 
-To learn more about Next.js, take a look at the following resources:
+But this always returns an empty array - no matter what I'm searching for in the `domain_contains` field. The types suggest it should be a string but I couldn't find any other documentation around what it's actually expecting. After this I started looking at the `domains` query and came up with this:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```js
+domains(first: 10, orderDirection: asc, where: { name_contains: "dave" }) {
+  labelName
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+This works - the problem with it is that there's no direct information about the `registrationDate` attached to the domain. I found that you could use the `labelHash` to query the registration by id; I also noticed that in the `events` object it had a list of all events and it would be a matter of figuring out which event was the inital registration (less than ideal).
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Having two separate queries - the initial `domains` query and then a secondary `registration(id: labelHash)` query is what's ultimately stumping me. I know there's some async/promise.all magic to wait for each registration query to complete
