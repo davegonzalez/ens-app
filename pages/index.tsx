@@ -4,11 +4,7 @@ import { useLazyQuery } from '@apollo/client';
 import { Domain, ENSData, HomePageProps } from 'types';
 import { useContract } from 'hooks/useContract';
 import { useSort } from 'hooks/useSort';
-import {
-  fetchRecentlyRegisteredDomains,
-  searchDomains,
-  fetchRegistration,
-} from 'gql/recentRegistrationsQuery';
+import { fetchRecentlyRegisteredDomains, searchDomains } from 'gql/recentRegistrationsQuery';
 import { Searchbar } from 'components/Input';
 import { Pill } from 'components/Pill';
 import { HorizontalList } from 'components/HorizontalList';
@@ -50,9 +46,8 @@ const Home: NextPage<HomePageProps> = ({ domains }) => {
   const [selected, setSelected] = useState<number>();
   const [searchText, setSearchText] = useState<string>('');
 
-  const { contract } = useContract();
-  const { ensData, setEnsData, sortAsc, sortDesc, sortOldToNew, sortNewToOld } =
-    useSort(domains);
+  const { contract, provider } = useContract();
+  const { ensData, setEnsData, sortAsc, sortDesc, sortOldToNew, sortNewToOld } = useSort(domains);
 
   const [searchAllDomains, { loading }] = useLazyQuery(searchDomains, {
     onCompleted(data) {
@@ -61,6 +56,8 @@ const Home: NextPage<HomePageProps> = ({ domains }) => {
   });
 
   const sendENSNameTransaction = async (name: string) => {
+    // @ts-ignore
+    await provider?.provider?.request({ method: 'eth_requestAccounts' });
     await contract?.setENSName(name);
   };
 
@@ -88,7 +85,7 @@ const Home: NextPage<HomePageProps> = ({ domains }) => {
   return (
     <Main>
       <Searchbar
-        placeholder="Search for an ENS name"
+        placeholder='Search for an ENS name'
         onChange={(e) => {
           setSearchText(e.target.value);
 
@@ -119,10 +116,7 @@ const Home: NextPage<HomePageProps> = ({ domains }) => {
         if (noEnsData || loading) return <div />;
 
         return (
-          <RainbowText
-            key={domain.id}
-            onClick={() => sendENSNameTransaction(domain.name)}
-          >
+          <RainbowText key={domain.id} onClick={() => sendENSNameTransaction(domain.name)}>
             {domain.name}
           </RainbowText>
         );
@@ -132,23 +126,3 @@ const Home: NextPage<HomePageProps> = ({ domains }) => {
 };
 
 export default Home;
-
-// const domainToStructure = async (domains: [Domain]) => {
-//   const all = await Promise.all(
-//     domains.map(async (domain) => {
-//       getRegistration({
-//         variables: {
-//           labelhash: domain.labelhash,
-//         },
-//       });
-
-//       // return regs;
-//     })
-//   );
-
-//   console.log(all);
-// };
-
-// const [getRegistration] = useLazyQuery(fetchRegistration);
-
-// domainToStructure(data.domains);

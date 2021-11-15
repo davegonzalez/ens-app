@@ -20,6 +20,11 @@ export const searchDomains = gql`
   }
 `;
 
+/**
+ * So this method isn't being used anywhere; it's what I was trying to use in order to asynchronously get
+ * a domain's registration date (see README).
+ */
+
 export const fetchRegistration = gql`
   query fetchRegistration($labelhash: ID) {
     registration(id: $labelhash) {
@@ -30,11 +35,7 @@ export const fetchRegistration = gql`
 
 export const searchRegistrations = gql`
   query getRegistrations($first: Int, $orderDirection: String) {
-    registrations(
-      first: $first
-      orderDirection: $orderDirection
-      orderBy: registrationDate
-    ) {
+    registrations(first: $first, orderDirection: $orderDirection, orderBy: registrationDate) {
       domain {
         name
       }
@@ -44,10 +45,7 @@ export const searchRegistrations = gql`
   }
 `;
 
-export const fetchRecentlyRegisteredDomains = async (
-  first = 10,
-  orderDirection = OrderBy.DESC
-) =>
+export const fetchRecentlyRegisteredDomains = async (first = 10, orderDirection = OrderBy.DESC) =>
   client.query({
     query: searchRegistrations,
     variables: {

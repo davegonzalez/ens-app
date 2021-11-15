@@ -15,7 +15,7 @@ export const Input = styled.input`
 
   ::placeholder {
     color: #ebebeb;
-    opacity: 1; /* Firefox */
+    opacity: 1; /* For Firefox */
   }
 
   .left-icon {
@@ -44,20 +44,18 @@ const StyledSearchbar = styled(Input)`
   padding-left: 110px;
 `;
 
-export const Searchbar: React.FC<InputHTMLAttributes<HTMLInputElement>> = (
-  props
-) => {
+export const Searchbar: React.FC<InputHTMLAttributes<HTMLInputElement>> = (props) => {
   return (
     <Container>
       <StyledSearchbar {...props} />
 
       <Icon>
         <Image
-          className="left-icon"
+          className='left-icon'
           src={MagnifyingGlass}
-          alt="search icon"
-          width="64px"
-          height="64px"
+          alt='search icon'
+          width='64px'
+          height='64px'
         />
       </Icon>
     </Container>
